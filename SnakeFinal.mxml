@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   width="604" height="400" minWidth="955" minHeight="600" 
+			   applicationComplete="applicationStart()" currentState="mainmenu" frameRate="30"
+			   backgroundColor.game="#CCF1C5"
+			   backgroundColor.gameend="#CCF1C5"
+			   backgroundColor.gamepause="#CCF1C5"
+			   backgroundColor.mainmenu="#CCF1C5">
+	<fx:Declarations>
+		<s:RadioButtonGroup id="radiogroup1"/>
+		<s:RadioButtonGroup id="radiogroup2"/>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+	</fx:Declarations>
+	<s:states>
+		<s:State name="game"/>
+		<s:State name="mainmenu"/>
+		<s:State name="gameend"/>
+		<s:State name="gamepause"/>
+	</s:states>
+	<fx:Script><![CDATA[
+		/*Snake Game
+		Created by: Jeremy Francispillai
+		Created on: May 10, 2012*/
+		
+		//if true, the snake moves in that direction for every frame
+		private var up1:Boolean = true;
+		private var down1:Boolean = false;
+		private var left1:Boolean = false;
+		private var right1:Boolean = false;
+		
+		//variables to make sure that the snake doesn't turn into itself
+		private var movedVert:Boolean=true;
+		private var movedHoriz:Boolean=false;
+		
+		//variable that keeps the length of the snake
+		private var numBlocks:int=3;
+		//if true, the food is move to a new position
+		private var moveFood:Boolean=true;
+		//when frameCount reaches the frameLevel, the snake moves; the lower the frameLevel the faster the snake moves
+		private var frameLevel:int=3;
+		private var frameCount:int=0;
+		//the speed which the game is run at
+		private var speed:String="normal";
+		private var colour:String="normal";
+		//if true, runs the gameOver function
+		private var endGame:Boolean=false;
+		//if true, the game restarts when the gameOver function is run
+		private var retry:Boolean=false;
+		
+		private var blockColour:String;
+		private var foodColour:String;
+		
+		//used to set the speed of the mainmenu snake
+		private var frameCount2:int=0;
+		private var frameLevel2:int=2;
+		
+		private var labelSize:int=1;
+		
+		//runs when the application begins
+		private function applicationStart():void{
+			stage.addEventListener(KeyboardEvent.KEY_DOWN, startGame);
+			stage.addEventListener(Event.ENTER_FRAME,menuSnake);
+		}
+		
+		//runs whenever a key is pressed
+		private function startGame(e:KeyboardEvent):void{
+			
+			//if enter is pressed
+			if(e.keyCode == 13){
+				//start the game if it is in the main menu or gameover menu
+				if(currentState=="mainmenu"||currentState=="gameend"){
+					currentState="game";
+					appStart();
+				}
+			}
+		}
+		
+		//controls the snake in the main menu, runs when in the main menu
+		private function menuSnake(e:Event):void{
+			if(currentState=="mainmenu"){
+				//array holding the blocks from the snake
+				var blocks2:Array=[L0,L1,L2,L3,L4,L5,L6];
+				//array of colours
+				var colours:Array=[0xffb502,0x1e88ea,0xf6ff02,0x03f1e3,0x4101f8,0xf801f5,0xdd052e,0x4e5a65,
+					0xe99b9b,0xffffff,0x33ed3c,0xba6519,0x109c4f,0x31bdce,0x768bd9,0x000000,0x669033,0xca00f5];
+				
+				//changes the speed of the mainmenu snake depending on the selected speed
+				if(speed=="fast"){
+					frameLevel2=1;
+				} 
+				else if(speed=="slow"){
+					frameLevel2=3;
+				}
+				else if(speed=="levels"||speed=="normal"){
+					frameLevel2=2;
+				}
+				
+				//changes the colour of the mainmenu snake depending on the selected colour
+				switch(colour){
+					case "normal":
+						L0.setStyle( "backgroundColor", 0xe36363);
+						for(var j:int=1;j<blocks2.length;j++){
+							blocks2[j].setStyle( "backgroundColor", 0xe99b9b);
+						}
+						break;
+					case "match":
+						//runs every 30 frames
+						if(frameCount2 % 30==0){
+							//picks a random colour from the colours array
+							var tempColour:String=colours[Math.floor(Math.random()*colours.length)];
+							//changes each block of the snake to tempColour
+							for(var k:int=0;k<blocks2.length;k++){
+								blocks2[k].setStyle( "backgroundColor",tempColour);
+							}
+						}
+						break;
+					case "add":
+						//runs every 30 frames
+						if(frameCount2 % 30==0){
+							//changes the colour of each of the block to a random colour from the colours array
+							for(var l:int=0;l<blocks2.length;l++){
+								blocks2[l].setStyle("backgroundColor",colours[Math.floor(Math.random()*colours.length)]);
+							}
+						}
+						break;
+				}
+				
+				if(frameCount2 % frameLevel2 == 0){
+					
+					//moves the blocks of the menu snake
+					for(var i:int=blocks2.length-1;i>+0;i--){
+						blocks2[i].move(blocks2[i-1].x,blocks2[i-1].y);
+					}
+					
+					//moves the head of the menu snake around the screen
+					if(L0.y==12){
+						
+						if(L0.x==576){
+							L0.y+=12;
+						}
+						else{
+							L0.x+=12; 
+						}
+					}
+					else if(L0.y==372){
+						
+						if(L0.x==12){
+							L0.y-=12;
+						}
+						else{
+							L0.x-=12; 
+						}
+					}
+					else if(L0.x==576){
+						L0.y+=12; 
+					}
+					else if(L0.x==12){
+						L0.y-=12; 
+					}
+					
+				}
+				frameCount2++;
+			}
+			
+			//makes sure that "100 block mode" and "levels" aren't selected at the same time
+			if(B100.selected){
+				if(S1.selected){
+					S3.selected=true;
+					speed="normal";
+				}
+				S1.enabled=false;
+			}
+			else{
+				S1.enabled=true;
+			}
+		}
+		
+		
+		//runs when the game begins
+		private function appStart():void{
+			
+			//array that holds all the blocks from the snake with the head of the snake already in the array
+			var blocks:Array=[Head];
+			//array that holds different colour values
+			var colours:Array=[0xffb502,0x1e88ea,0xf6ff02,0x03f1e3,0x4101f8,0xf801f5,0xdd052e,0x4e5a65,
+				0xe99b9b,0xffffff,0x33ed3c,0xba6519,0x109c4f,0x31bdce,0x768bd9,0x000000,0x669033,0xca00f5];
+			currentState="game";
+			
+			//makes the length of the snake 100 blocks
+			if(B100.selected){
+				numBlocks=100;
+			}
+			
+			//listens for keys that are pressed and runs the keydown function whenever a key is pressed
+			stage.addEventListener(KeyboardEvent.KEY_DOWN, keydown);
+			//runs the enterFrame function for every frame
+			stage.addEventListener(Event.ENTER_FRAME, enterFrame);
+			
+			//runs for every frame
+			function enterFrame(e:Event):void{
+				
+				//ends the game if endGame is true
+				if(endGame){
+					endGame=false;
+					gameOver();
+				}
+				
+				if(frameCount>=frameLevel){
+					
+					//adds new block to snake if size of snake is larger than the number of blocks in array
+					if(blocks.length<numBlocks){
+						var newBlock:Label = new Label();
+						
+						//sets the colour of the blocks of the snake depending on the colour mode that is selected
+						if(Cl1.selected){
+							newBlock.setStyle( "backgroundColor", 0xE99B9B);
+						}
+						else if(Cl2.selected||Cl3.selected){
+							if (moveFood){
+								newBlock.setStyle( "backgroundColor", foodColour);
+							}
+							else{
+								newBlock.setStyle( "backgroundColor", blockColour);
+							}
+						}
+						newBlock.width=10;
+						newBlock.height=10;
+						C1.addChild(newBlock);
+						blocks.push(newBlock);
+						blockColour=colours[Math.floor(Math.random()*colours.length)];
+					}
+					
+					//each block takes the position of the previous block in array
+					for(var i:int=blocks.length-1;i>+0;i--){
+						blocks[i].move(blocks[i-1].x,blocks[i-1].y);
+						
+					}
+					
+					//moves the snake
+					if (up1 === true) {
+						Head.y -= 12; 
+						movedVert=true;
+						movedHoriz=false;
+					}
+					if (down1 === true) {
+						Head.y += 12 
+						movedVert=true;
+						movedHoriz=false;
+					}
+					if (left1 === true) {
+						Head.x -= 12; 
+						movedHoriz=true;
+						movedVert=false;
+					}
+					if (right1 === true) {
+						Head.x += 12;
+						movedHoriz=true;
+						movedVert=false;
+					} 
+					
+					//checks to see if the snake hits itself
+					for(var j:int=3;j<blocks.length;j++) {
+						
+						if(Head.hitTestObject(blocks[j])){
+							gameOver();
+						}
+						
+					}
+					
+					//checks to see if the snake hits the wall and ends game
+					if(Head.x>595) {
+						gameOver();
+					} 
+					else if(Head.x<-6) {
+						gameOver();
+					}
+					else if(Head.y>390) {
+						gameOver();
+					}
+					else if(Head.y<-6) {
+						gameOver();
+					}
+					
+					if(moveFood){
+						//moves the food to a random spot
+						Food.move(Math.ceil(Math.random()*47)*12+12,Math.ceil(Math.random()*30)*12+12)
+						Food.setStyle( "backgroundColor", blockColour);
+						moveFood=false;
+						
+						//if the food lands on the snake, the food is moved to a new spot on the next frame
+						for(var k:int=1;k<blocks.length;k++){
+							if(Food.hitTestObject(blocks[k])){
+								moveFood=true;
+							}
+						}
+						
+						foodColour=blockColour;
+					}
+					
+					//adds a block to the snake and moves food when the head of snake hits the food
+					if(Head.hitTestObject(Food)) {
+						numBlocks++;
+						moveFood=true;
+						Size.text=String(numBlocks);
+						
+						if(Cl2.selected){ 
+							for(var l:int=0;l<blocks.length;l++){
+								blocks[l].setStyle("backgroundColor", foodColour);
+							}
+						}
+					}
+					
+					frameCount=0;
+					
+				}
+				
+				if (currentState=="game"){
+					frameCount++;
+				}
+				
+				//sets the framerate that the game runs at 
+				switch(speed) {
+					
+					case "levels":
+						if(numBlocks<10){
+							frameLevel=3;
+							Level.text="1";
+						} 
+						else if(numBlocks<30){
+							frameLevel=2;
+							Level.text="2";
+						} 
+						else if(numBlocks>=30) {
+							frameLevel=1;
+							Level.text="3";
+						}
+						Level.visible=true;
+						Lvl.visible=true;
+						break;
+					
+					case "slow":
+						frameLevel=3;
+						Level.visible=false;
+						Lvl.visible=false;
+						break;
+					
+					case "normal":
+						frameLevel=2;
+						Level.visible=false;
+						Lvl.visible=false;
+						break;
+					
+					case "fast":
+						frameLevel=1;
+						Level.visible=false;
+						Lvl.visible=false;
+						break;
+					
+				}
+				
+				Size.text=String(numBlocks);
+			}
+			
+			//checks which keys are pressed
+			function keydown(e:KeyboardEvent):void {
+				//if the up arrow is pressed
+				if (e.keyCode === 38 && movedHoriz===true) {
+					up1 =true;
+					down1 =false;
+					right1 =false;
+					left1 =false;
+				}
+				//if the down arrow is pressed
+				if(e.keyCode === 40 && movedHoriz===true) {
+					down1 =true;
+					up1 =false;
+					right1 =false;
+					left1 =false;
+				}
+				//if the left arrow is pressed
+				if(e.keyCode === 37 && movedVert===true) {
+					left1 =true;
+					up1 =false;
+					down1 =false;
+					right1 =false;
+				}
+				//if the right arrow is pressed
+				if(e.keyCode === 39 && movedVert===true) {
+					right1 =true;
+					up1 =false;
+					down1 =false;
+					left1 =false;
+				}
+				if(e.keyCode === 32) {
+					//pauses and unpauses game with spacebar
+					if(currentState=="game"){
+						currentState="gamepause";
+					}
+					else if(currentState=="gamepause"){
+						currentState="game";
+					}
+				}
+			}
+			
+			//runs whenever the game ends
+			function gameOver():void {
+				if(currentState=="game"){
+					currentState="gameend";
+				} 
+				else if(currentState=="gamepause"){
+					currentState="mainmenu";
+				}
+				up1=true;
+				down1=false;
+				left1=false;
+				right1=false;
+				//moves head of snake back to original position
+				Head.move(288,348);
+				moveFood=true;
+				//creates a new highscore if the number of blocks on the snake is greater than the previous highscore
+				if(numBlocks>Number(High.text) && B100.selected==false){
+					High.text=String(numBlocks); 
+					//makes the new highscore label visible
+					newH.visible=true;
+				}
+				else{
+					//makes the new highscore label invisible
+					newH.visible=false;
+				}
+				//sets the length of the snake to 3
+				numBlocks=3;
+				//removes event listener that looks for keys that are presses
+				stage.removeEventListener(KeyboardEvent.KEY_DOWN, keydown);
+				//stops running the enterFrame function every frame
+				stage.removeEventListener(Event.ENTER_FRAME, enterFrame);
+				//removes all the blocks from the snake
+				for(var i:int=1;i<blocks.length;i++){
+					C1.removeChild(blocks[i]);
+				}
+				//begins the game again if retry is true
+				if(retry){
+					appStart();
+					retry=false;
+				}
+			}
+		}
+		
+	]]></fx:Script>
+	<s:Button includeIn="gameend,gamepause,mainmenu" x="265" y="166" label="Start"
+			  click="currentState='game';appStart();"
+			  x.gameend="260" y.gameend="144" width.gameend="80" label.gameend="Retry"
+			  click.gameend="appStart();"
+			  x.gamepause="260" y.gamepause="157" width.gamepause="80" label.gamepause="Retry"
+			  click.gamepause="retry=true;endGame=true;"
+			  x.mainmenu="257" y.mainmenu="239" width.mainmenu="86" height.mainmenu="34"
+			  fontSize.mainmenu="18" fontWeight.mainmenu="bold"/>
+	<s:Button includeIn="gamepause" x="260" y="126" width="80" label="Continue" click="currentState= &quot;game&quot;"/>
+	<s:Label includeIn="mainmenu" x="152" y="43" fontFamily="Verdana" fontSize="40" fontWeight="bold"
+			 text="Simple Snake" textAlign="center"/>
+	<mx:Canvas id="C1" includeIn="game" x="0" y="2" width="110%" height="110%"
+			   backgroundColor="#CCF1C5" textAlign="center" textDecoration="none">
+		<s:Label id="Head" includeIn="game" x="288" y="348" width="10" height="10"
+				 backgroundColor="#E36363" fontSize="8" textAlign="center" verticalAlign="bottom"/>
+		<s:Label id="Food" includeIn="game" x="97" y="140" width="10" height="10"
+				 backgroundColor="#1E88EA"/>
+		<s:Label includeIn="game" x="487" y="8" text="Size:"/>
+		<s:Label id="Size" includeIn="game" x="515" y="9" width="27" text="3" textAlign="left"/>
+		<s:Label id="Lvl" includeIn="game" x="282" y="10" text="Level:"/>
+		<s:Label id="Level" includeIn="game" x="314" y="10" text="1"/>
+		<s:Button includeIn="game" x="550" y="5" width="40" height="16" label=" ▌▌" chromeColor="#CCF1C5"
+				  click="currentState=&quot;gamepause&quot;;" cornerRadius="0" fontSize="8"/>
+	</mx:Canvas>
+	<s:Label includeIn="game,gameend,gamepause,mainmenu" x="246" y="285" text="Your HighScore:"
+			 x.game="10" y.game="10"
+			 x.mainmenu="234" y.mainmenu="296" fontSize.mainmenu="14" fontWeight.mainmenu="bold"
+			 textAlign.mainmenu="left"/>
+	<s:Label id="High" includeIn="game,gameend,gamepause,mainmenu" x="342" y="285" text="0"
+			 x.game="100" y.game="10"
+			 x.mainmenu="350" y.mainmenu="294" fontSize.mainmenu="18" fontWeight.mainmenu="bold"
+			 textAlign.mainmenu="left"/>
+	<s:Button includeIn="gameend,gamepause" x="260" y="166" label="Main Menu"
+			  x.gameend="260" y.gameend="177" click.gameend="currentState=&quot;mainmenu&quot;"
+			  x.gamepause="260" y.gamepause="190" click.gamepause="endGame=true;"/>
+	<s:VGroup includeIn="mainmenu" x="228" y="127">
+		<s:RadioButton id="S1" label="Levels" click="speed=&quot;levels&quot;; B100.selected=false;"
+					   groupName="radiogroup1"/>
+		<s:RadioButton id="S2" label="Slow" click="speed=&quot;slow&quot;" groupName="radiogroup1"/>
+		<s:RadioButton id="S3" label="Normal" click="speed=&quot;normal&quot;"
+					   groupName="radiogroup1" selected="true"/>
+		<s:RadioButton id="S4" label="Fast" click="speed=&quot;fast&quot;;" groupName="radiogroup1"/>
+	</s:VGroup>
+	<s:Label includeIn="mainmenu" x="228" y="107" fontWeight="bold" text="Speed"/>
+	<s:Label includeIn="mainmenu" x="307" y="107" fontWeight="bold" text="Colour"/>
+	<s:Label includeIn="gamepause" x="186" y="54" fontSize="35" fontWeight="bold" text="Game Paused"
+			 textAlign="center"/>
+	<s:Label includeIn="gameend" x="200" y="56" fontSize="36" fontWeight="bold" text="Game Over"
+			 verticalAlign="middle"/>
+	<s:Label includeIn="mainmenu,gamepause" x="244" y="337" fontWeight="bold"
+			 text="Arrow Keys to Move" textAlign="center" verticalAlign="middle"
+			 x.gamepause="234" width.gamepause="135" text.gamepause="Enter to Retry"/>
+	<s:Label includeIn="mainmenu,gamepause,gameend" x="243" y="353" width="115" fontWeight="bold"
+			 text="Spacebar to Pause" textAlign="center" verticalAlign="middle"
+			 text.gameend="Enter to Retry"
+			 x.gamepause="232" width.gamepause="135" text.gamepause="Spacebar to Unpause"/>
+	<s:Group includeIn="gamepause" x="480" y="246" width="10" height="9"
+			 contentBackgroundColor="#E21B1B">
+	</s:Group>
+	<s:CheckBox id="B100" includeIn="mainmenu" x="36" y="347" label="100 Block Mode"/>
+	<s:VGroup includeIn="mainmenu" x="307" y="127">
+		<s:RadioButton id="Cl1" label="Normal" click="colour=&quot;normal&quot;"
+					   groupName="radiogroup2" selected="true"/>
+		<s:RadioButton id="Cl2" label="Match Food Colour" click="colour=&quot;match&quot;"
+					   groupName="radiogroup2"/>
+		<s:RadioButton id="Cl3" label="Add on Food Colour" click="colour=&quot;add&quot;"
+					   groupName="radiogroup2"/>
+	</s:VGroup>
+	<s:Label id="L0" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E36363"/>
+	<s:Label id="L1" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="L2" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="L3" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="L4" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="L5" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="L6" includeIn="mainmenu" x="12" y="12" width="10" height="10"
+			 backgroundColor="#E99B9B"/>
+	<s:Label id="newH" includeIn="gameend" x="257" y="266" color="#F51D1D" fontSize="11"
+			 fontWeight="bold" text="New HighScore!"/>
+	<s:Label includeIn="mainmenu" x="445" y="353" text="Created by:"/>
+	<s:Label includeIn="mainmenu" x="509" y="353" fontWeight="bold" text="JEREMY F"/>
+	<s:Label id="back1" x="600" y="0" width="4" height="400"
+			 backgroundColor="#000000"/>
+	<s:Label id="back2" x="0" y="396" width="604" height="4"
+			 backgroundColor="#000000"/>
+	
+</s:Application>
